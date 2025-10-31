@@ -19,13 +19,15 @@ class Settings(BaseSettings):
     mongo_db_name: str = Field("medical_analyzer", env="MONGO_DB_NAME")
     openai_api_key: str | None = Field(default=None, env="OPENAI_API_KEY")
     secret_key: str = Field(..., env="SECRET_KEY")
-    cors_origins: List[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: List[str] | str = Field(default="http://localhost:3000", env="CORS_ORIGINS")
     default_user_email: EmailStr | None = Field(default=None, env="DEFAULT_USER_EMAIL")
     default_user_password: str | None = Field(default=None, env="DEFAULT_USER_PASSWORD")
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", mode="after")
     @classmethod
-    def split_cors_origins(cls, value: str | List[str]) -> List[str]:
+    def ensure_cors_list(cls, value: List[str] | str | None) -> List[str]:
+        if not value:
+            return ["http://localhost:3000"]
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value

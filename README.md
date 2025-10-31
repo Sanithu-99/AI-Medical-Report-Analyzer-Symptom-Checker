@@ -1,23 +1,35 @@
 # AI Medical Report Analyzer and Symptom Checker
 
-An end-to-end medical insights platform that lets patients and clinicians upload clinical documents, extract the key text with OCR, interpret findings with NLP, predict potential health risks, and run symptom checks through a clean Apple-inspired interface.
+An end-to-end clinical insights platform that transforms uploaded medical reports into clear summaries, predictive health insights, and interactive visualisations. OCR extracts the data, NLP interprets it, an ML layer flags potential risks, and a sleek Apple-inspired UI keeps everything approachable.
 
-## Features
-- Secure authentication with JWT-based login and registration.
-- Upload PDFs or images; EasyOCR converts imagery into text and stores results in MongoDB.
-- spaCy/OpenAI-powered summarisation with optional GPT-4o support.
-- Lightweight Random Forest model for health insight predictions with fallback heuristics.
-- Symptom checker that maps free-text complaints to likely conditions.
-- Responsive Next.js 14 dashboard with TailwindCSS and Chart.js visualisations.
+---
 
-## Project Structure
+## Feature Highlights
+- **Secure authentication** with JWT, bcrypt hashing, and auto-seeded default accounts for quick demos.
+- **Medical report workflow**: PDF/image OCR → NLP summarisation (spaCy with optional GPT-4o-mini) → Random Forest predictions with keyword-based fallback heuristics.
+- **Symptom checker** that maps free-text complaints to possible conditions.
+- **Persistent insights** stored in MongoDB Atlas and surfaced in a responsive Next.js dashboard.
+- **Visualisations** powered by Chart.js with Tailwind-styled cards and glassmorphism UI.
+
+---
+
+## Tech Stack
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Next.js 14, React 18, TailwindCSS, Axios, Chart.js |
+| Backend | FastAPI, Motor, scikit-learn, pandas, numpy (`<2`), spaCy, EasyOCR, PyMuPDF |
+| Database | MongoDB Atlas |
+| Deployment targets | Vercel (frontend), Render (backend), MongoDB Atlas |
+
+---
+
+## Repository Layout
 ```
-root/
+.
 ├── backend/
-│   ├── main.py
-│   ├── database.py
-│   ├── settings.py
-│   ├── requirements.txt
+│   ├── main.py                  # FastAPI application
+│   ├── database.py              # MongoDB connection helpers
+│   ├── settings.py              # Pydantic Settings v2 configuration
 │   ├── routers/
 │   │   ├── auth.py
 │   │   ├── report_analyzer.py
@@ -29,123 +41,133 @@ root/
 │   │   ├── predictor.py
 │   │   ├── train_model.py
 │   │   └── sample_training_data.csv
-│   ├── ocr/
-│   │   └── extract_text.py
-│   └── nlp/
-│       └── interpret_text.py
+│   ├── ocr/extract_text.py
+│   ├── nlp/interpret_text.py
+│   └── requirements.txt
 ├── frontend/
-│   ├── package.json
-│   ├── next.config.js
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   ├── jsconfig.json
-│   ├── pages/
-│   │   ├── _app.js
-│   │   ├── _document.js
-│   │   ├── index.js
-│   │   ├── login.js
-│   │   ├── dashboard.js
-│   │   └── report.js
+│   ├── pages/                   # Next.js routes
 │   ├── components/
-│   │   ├── Navbar.js
-│   │   ├── UploadBox.js
-│   │   ├── ResultCard.js
-│   │   └── ChartSection.js
-│   ├── lib/api.js
 │   ├── styles/globals.css
-│   └── public/
+│   ├── lib/api.js
+│   └── package.json
+├── .gitignore
 └── README.md
 ```
 
+---
+
 ## Backend Setup
-1. **Prerequisites**
-   - Python 3.10+
-   - MongoDB Atlas connection string
-   - Optional: OpenAI API key for enhanced summaries
 
-2. **Environment**
-   ```bash
-   cd backend
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
+### 1. Prerequisites
+- Python 3.10+
+- MongoDB Atlas connection string
+- Optional: OpenAI API key (for GPT-enabled summaries)
 
-3. **Configuration**
-   Copy `backend/.env` and update:
-   ```ini
-   MONGO_URI="your-mongodb-atlas-uri"
-   MONGO_DB_NAME="medical_analyzer"
-   OPENAI_API_KEY="your-openai-api-key"  # optional
-   SECRET_KEY="your-jwt-secret-key"
-   CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
-    DEFAULT_USER_EMAIL="sanithu.hulathduwage@gmail.com"  # optional auto-seeded account
-    DEFAULT_USER_PASSWORD="AiApp@1243"                    # optional auto-seeded account
-   ```
-   When `DEFAULT_USER_EMAIL` and `DEFAULT_USER_PASSWORD` are present, the API seeds that user on startup so you can log in immediately.
+### 2. Virtualenv & Dependencies
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate            # Windows PowerShell: .venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt      # includes numpy<2 for SciPy/sklearn binary compatibility
+```
 
-4. **Database & Models**
-   - `Auth` endpoints store users in the `users` collection (passwords hashed with bcrypt).
-   - Reports live in the `reports` collection, referencing the owning user.
+### 3. Environment Variables
+Update `backend/.env` with real values:
+```ini
+MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/medical_analyzer?retryWrites=true&w=majority"
+MONGO_DB_NAME="medical_analyzer"
+OPENAI_API_KEY="your-openai-api-key"      # optional
+SECRET_KEY="your-jwt-secret-key"
+CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
+DEFAULT_USER_EMAIL="sanithu.hulathduwage@gmail.com"   # optional auto-seed
+DEFAULT_USER_PASSWORD="AiApp@1243"
+```
+Notes:
+- `CORS_ORIGINS` can be a simple comma-separated string (no JSON).
+- If `DEFAULT_USER_*` values are present, the account is created or updated on startup.
 
-5. **Run the API**
-   ```bash
-   uvicorn backend.main:app --reload --port 8000
-   ```
-   The API exposes:
-   - `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
-   - `POST /api/reports/upload` for OCR + NLP + prediction
-   - `GET /api/reports` for the user history
-   - `POST /api/symptoms` for the symptom checker
+### 4. Run the API
+Always launch from the project root so relative imports resolve:
+```bash
+cd ..
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+Keep this process running. In another terminal you can verify:
+```bash
+curl http://127.0.0.1:8000/health
+```
 
-6. **Training the ML Model (optional)**
-   Provide CSV data containing `text` and `label` columns:
-   ```bash
-   python backend/ml/train_model.py
-   ```
-   The script saves `model.joblib` and `vectorizer.joblib` for use by the predictor. Fallback heuristics are used when the model is absent.
+### 5. ML Model (Optional)
+The app ships with heuristics and a sample CSV. Train a real model by providing your own dataset:
+```bash
+python backend/ml/train_model.py
+```
+This generates `ml/model.joblib` and `ml/vectorizer.joblib`, which are auto-loaded by `predictor.py`.
 
-7. **OCR & NLP Notes**
-   - EasyOCR lazily initialises and supports PDF/image ingestion through PyMuPDF and Pillow conversions.
-   - spaCy is the default summariser. If `OPENAI_API_KEY` is present, the app attempts a GPT-4o-mini summary and falls back to spaCy when unavailable.
-   - Install the English core model when using spaCy:
-     ```bash
-     python -m spacy download en_core_web_sm
-     ```
+### 6. NLP/OCR Extras
+```bash
+python -m spacy download en_core_web_sm
+```
+EasyOCR and PyMuPDF install automatically; GPU acceleration is disabled by default for portability.
+
+---
 
 ## Frontend Setup
-1. **Install dependencies**
-   ```bash
-   cd frontend
-   npm install
-   ```
-2. **Environment**
-   Update `frontend/.env.local` if needed:
-   ```bash
-   NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
-   ```
-3. **Development server**
-   ```bash
-   npm run dev
-   ```
-   Visit `http://localhost:3000` for the Apple-inspired dashboard featuring uploads, summaries, charts, and a symptom checker.
+```bash
+cd frontend
+npm install
+```
+Environment (`frontend/.env.local`):
+```ini
+NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+```
+Start the dev server:
+```bash
+npm run dev
+```
+Navigate to `http://localhost:3000` to access the login page, dashboards, uploads, charts, and the symptom checker.
 
-## Deployment Notes
-- **Frontend**: Deploy to Vercel. Ensure `NEXT_PUBLIC_API_URL` points to your Render backend URL.
-- **Backend**: Deploy to Render (or similar) with environment variables set from `.env`.
-- **Database**: Use MongoDB Atlas, whitelisting Render+Vercel IPs or enabling VPC peering.
+---
 
-## Security & Future Enhancements
-- Add rate limiting and audit logging for uploads.
-- Extend the ML model with additional lab results and integrate more robust clinical ontologies.
-- Attach signed URLs for report storage in S3 or similar.
-- Expand symptom checker with knowledge graph support and triage pathways.
+## Deployment Checklist
+- **MongoDB Atlas**: create a database user, set network access rules (IP allow-list or VPC peering).
+- **Backend (Render/other PaaS)**  
+  - Build: `pip install -r backend/requirements.txt && python -m spacy download en_core_web_sm`  
+  - Start: `uvicorn backend.main:app --host 0.0.0.0 --port 10000`  
+  - Environment: replicate `.env` values, update `CORS_ORIGINS` with your production frontend URL.
+- **Frontend (Vercel)**: set `NEXT_PUBLIC_API_URL` to the deployed backend endpoint.
 
-## Testing Checklist
-- [ ] Register and login using `/login`
-- [ ] Upload sample PDF/image and verify insights appear in dashboard cards and charts
-- [ ] Enter symptoms to confirm predictions render
-- [ ] Refresh dashboard to ensure stored reports load from MongoDB
-- [ ] Run FastAPI health check at `/health`
+---
 
-Enjoy building with the AI Medical Report Analyzer and Symptom Checker!
+## Troubleshooting Guide
+| Symptom | Likely Cause | Resolution |
+| --- | --- | --- |
+| `ModuleNotFoundError: No module named 'backend'` | Uvicorn started inside `backend/` | Run Uvicorn from repo root (`uvicorn backend.main:app …`). |
+| `SettingsError` for `cors_origins` | Env string parsed as JSON | Leave it as a comma-separated string (`http://a.com,http://b.com`). |
+| NumPy ABI error (`compiled using NumPy 1.x`) | New numpy 2.x with old SciPy wheel | Use the supplied requirements (installs `numpy<2`). |
+| Login inputs not focusable | Hot reload cached old CSS | Restart `npm run dev`, hard refresh the browser (⌘⇧R). |
+
+---
+
+## Suggested Smoke Test
+- [ ] `curl http://127.0.0.1:8000/health`
+- [ ] Log in with the seeded credentials on `/login`
+- [ ] Upload a sample report; confirm summary, insights, chart, and MongoDB entry
+- [ ] Submit symptoms; check prediction response
+- [ ] Refresh dashboard to ensure historic reports load correctly
+
+---
+
+## Roadmap Ideas
+- Rate limiting and audit logs for uploads/downloads.
+- External object storage with signed URLs for original reports.
+- Expand the symptom checker with structured clinical ontologies.
+- Add automated tests (PyTest for backend, Playwright/Cypress for frontend).
+
+---
+
+### Contributing
+Issues and PRs are welcome. Please describe the problem clearly and include reproduction steps. For major changes, open an issue to discuss the approach first.
+
+Enjoy building with the AI Medical Report Analyzer! If you run into snags, feel free to reach out or file an issue. 😊
