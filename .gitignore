@@ -8,11 +8,30 @@ env/
 venv/
 *.sqlite3
 
-# Node
+# Node / Next.js
 node_modules/
 .next/
 dist/
 build/
 
-# Mac system files
+# Logs
+*.log
+
+# System files
 .DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+
+# Misc
+*.iml
+*.swp
+*.swo
+*~
+coverage/
