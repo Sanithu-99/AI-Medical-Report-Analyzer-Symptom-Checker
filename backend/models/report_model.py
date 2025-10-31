@@ -1,9 +1,11 @@
 from typing import List
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MedicalReport(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str | None = Field(default=None, alias="_id")
     user_id: str
     report_name: str
@@ -12,10 +14,8 @@ class MedicalReport(BaseModel):
     insights: List[str]
     created_at: str
 
-    class Config:
-        allow_population_by_field_name = True
-
-    @validator("id", pre=True, always=True)
+    @field_validator("id", mode="before")
+    @classmethod
     def ensure_string_id(cls, value):
         if value is None:
             return value
