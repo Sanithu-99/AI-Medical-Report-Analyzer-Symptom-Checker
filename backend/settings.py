@@ -1,8 +1,8 @@
 from functools import lru_cache
 from typing import List
 
-from pydantic import BaseSettings, EmailStr, Field, validator
-
+from pydantic import EmailStr, Field, validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
