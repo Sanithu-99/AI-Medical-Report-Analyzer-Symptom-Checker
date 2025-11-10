@@ -13,6 +13,9 @@ class MedicalReport(BaseModel):
     ai_summary: str
     insights: List[str]
     created_at: str
+    phi_mapping_id: str | None = None
+    quasi_identifiers: dict[str, str] = Field(default_factory=dict)
+    storage_state: str = "active"
 
     @field_validator("id", mode="before")
     @classmethod

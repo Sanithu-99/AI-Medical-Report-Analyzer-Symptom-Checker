@@ -19,13 +19,37 @@ def extract_text_from_file(file_content: bytes, content_type: ContentType) -> st
 
 
 def _extract_from_pdf(file_content: bytes) -> str:
-    texts = []
+    """Prefer native text extraction and fall back to OCR page-by-page."""
+
+    texts: list[str] = []
     with fitz.open(stream=file_content, filetype="pdf") as doc:
         for page in doc:
-            pix = page.get_pixmap(dpi=200)
+            text = _normalize_pdf_text(page.get_text("text"))
+            if _has_meaningful_text(text):
+                texts.append(text)
+                continue
+
+            pix = page.get_pixmap(dpi=180)
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             texts.append(_perform_ocr(img))
-    return "\n".join(texts)
+
+    return "\n".join(filter(None, texts))
+
+
+def _normalize_pdf_text(value: str | None) -> str:
+    """Collapse excessive whitespace so we can judge whether a page has real text."""
+    if not value:
+        return ""
+    collapsed = " ".join(value.split())
+    return collapsed.strip()
+
+
+def _has_meaningful_text(value: str) -> bool:
+    """Treat the page as text-based when enough alphanumeric characters remain."""
+    if not value:
+        return False
+    alnum_count = sum(char.isalnum() for char in value)
+    return alnum_count >= 10
 
 
 def _extract_from_image(file_content: bytes) -> str:

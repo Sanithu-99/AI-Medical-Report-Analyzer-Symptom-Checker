@@ -1,0 +1,39 @@
+[
+  {
+    "report_id": "demo-001",
+    "user_plan": "clinician",
+    "anonymized_text": "Patient <PERSON:pseudonym-1> presents with elevated LDL (178 mg/dL) and HbA1c of 6.4%.",
+    "quasi_identifiers": {
+      "age_bucket": "45-59",
+      "region": "940XX",
+      "gender": "F"
+    },
+    "insights": [
+      "LDL remains markedly elevated despite statin therapy.",
+      "Progression toward diabetes — reinforce lifestyle coaching."
+    ],
+    "health_score": 72,
+    "risk_factors": [
+      "cholesterol",
+      "glucose"
+    ]
+  },
+  {
+    "report_id": "demo-002",
+    "user_plan": "institution",
+    "anonymized_text": "MRI brain review shows no acute ischemia. Mild chronic microvascular changes persist.",
+    "quasi_identifiers": {
+      "age_bucket": "60-74",
+      "region": "606XX",
+      "gender": "M"
+    },
+    "insights": [
+      "Findings stable vs. prior imaging.",
+      "Recommend continued hypertension control."
+    ],
+    "health_score": 88,
+    "risk_factors": [
+      "bp"
+    ]
+  }
+]

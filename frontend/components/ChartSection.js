@@ -3,14 +3,16 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
+  Filler,
   Tooltip,
   Legend,
   Title,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, Title);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend, Title);
 
 export default function ChartSection({ data = [] }) {
   const chartData = useMemo(() => {
@@ -20,10 +22,25 @@ export default function ChartSection({ data = [] }) {
       labels,
       datasets: [
         {
-          label: "Health Indicator",
+          label: "Health score",
           data: values,
-          borderRadius: 12,
-          backgroundColor: "rgba(26, 26, 26, 0.8)",
+          tension: 0.35,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2.5,
+          fill: true,
+          borderColor: "rgba(52, 179, 160, 0.9)",
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx, chartArea } = chart;
+            if (!chartArea) {
+              return null;
+            }
+            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, "rgba(52, 179, 160, 0.35)");
+            gradient.addColorStop(1, "rgba(52, 179, 160, 0.05)");
+            return gradient;
+          },
         },
       ],
     };
@@ -35,14 +52,14 @@ export default function ChartSection({ data = [] }) {
       legend: { display: false },
       title: {
         display: true,
-        text: "Health Overview",
+        text: "Health score trend",
         font: { size: 16, weight: "bold" },
-        color: "#1a1a1a",
+        color: "#1f3b57",
       },
       tooltip: {
-        backgroundColor: "rgba(17, 24, 39, 0.95)",
-        titleColor: "#fff",
-        bodyColor: "#fff",
+        backgroundColor: "rgba(31, 59, 87, 0.95)",
+        titleColor: "#e3f2ff",
+        bodyColor: "#f8fbff",
         borderWidth: 0,
         padding: 12,
       },
@@ -50,8 +67,9 @@ export default function ChartSection({ data = [] }) {
     scales: {
       y: {
         beginAtZero: true,
-        grid: { display: false },
-        ticks: { color: "#6b7280" },
+        suggestedMax: 100,
+        grid: { color: "rgba(45, 55, 72, 0.15)" },
+        ticks: { color: "#6b7280", padding: 10 },
       },
       x: {
         grid: { display: false },
@@ -60,9 +78,17 @@ export default function ChartSection({ data = [] }) {
     },
   };
 
+  if (!data.length) {
+    return (
+      <section className="section-card text-sm text-ocean/60">
+        Upload analysed reports to visualise the health score trend. Each new report extends the timeline automatically.
+      </section>
+    );
+  }
+
   return (
-    <section className="glass gradient-border p-6">
-      <Bar data={chartData} options={options} height={240} />
+    <section className="section-card">
+      <Line data={chartData} options={options} height={240} />
     </section>
   );
 }

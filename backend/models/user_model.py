@@ -8,6 +8,13 @@ class User(BaseModel):
     email: EmailStr
     password_hash: str
     created_at: str
+    role: str = "user"  # user | clinician | admin
+    plan: str = "individual"
+    plan_expiry: str | None = None
+    mfa_enabled: bool = False
+    totp_secret: str | None = None
+    last_login_at: str | None = None
+    last_login_ip: str | None = None
 
     @field_validator("id", mode="before")
     @classmethod

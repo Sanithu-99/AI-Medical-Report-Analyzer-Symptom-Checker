@@ -4,36 +4,133 @@
 
 :root {
   color-scheme: light;
+  --page-background-color: #e4edf9;
+  --page-background: radial-gradient(circle at top left, rgba(216, 228, 245, 0.8), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(188, 226, 218, 0.6), transparent 45%),
+    linear-gradient(180deg, #f8fbff 0%, #ffffff 60%, #ecf3ff 100%);
+  --shell-inline: clamp(1.25rem, 4vw, 4.75rem);
+  --shell-block: clamp(2.25rem, 5vw, 5.5rem);
+  --shell-max-width: 1340px;
+  --card-gap: clamp(1.75rem, 3vw, 3.5rem);
+  --card-radius: 2.25rem;
+  --card-shadow: 0 35px 80px -45px rgba(15, 35, 60, 0.55);
+}
+
+html,
+body,
+#__next {
+  min-height: 100%;
+  background-color: var(--page-background-color);
+  background-image: var(--page-background);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-soft-gray text-midnight font-sans min-h-screen;
+  @apply min-h-screen font-sans antialiased text-ocean overflow-x-hidden;
 }
 
-main {
-  @apply min-h-screen;
-}
-
-.glass {
-  @apply bg-white bg-opacity-80 backdrop-blur-xl shadow-soft rounded-3xl;
-}
-
-.gradient-border {
+.page-shell {
   position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  padding-block: var(--shell-block);
+  padding-inline: var(--shell-inline);
 }
 
-.gradient-border::before {
+.page-shell::before,
+.page-shell::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 1.5rem;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.page-shell::before {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(63, 110, 161, 0.18), transparent 55%),
+    radial-gradient(circle at 88% 20%, rgba(52, 179, 160, 0.16), transparent 50%);
+}
+
+.page-shell::after {
+  background:
+    radial-gradient(circle at 20% 80%, rgba(63, 110, 161, 0.08), transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(52, 179, 160, 0.08), transparent 45%);
+  filter: blur(24px);
+}
+
+.page-shell-inner {
+  width: min(100%, var(--shell-max-width));
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
+
+.page-shell-inner--full {
+  width: 100%;
+  max-width: none;
+}
+
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
+
+.section-card {
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: clamp(1.75rem, 2.5vw, 3.25rem);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.section-card--compact {
+  padding: clamp(1.25rem, 1.9vw, 2.25rem);
+}
+
+.section-card--muted {
+  border-style: dashed;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.section-card:hover {
+  box-shadow: 0 25px 60px -40px rgba(15, 35, 60, 0.45);
+}
+
+.glass {
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.gradient-border,
+.section-card {
+  position: relative;
+}
+
+.gradient-border::before,
+.section-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(209, 213, 219, 0.6));
+  background: linear-gradient(135deg, rgba(63, 110, 161, 0.15), rgba(52, 179, 160, 0.25));
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  mask-composite: exclude;
   pointer-events: none;
 }
 
@@ -42,4 +139,37 @@ main {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.smooth-scroll-area {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  #__next,
+  .smooth-scroll-area {
+    scroll-behavior: auto;
+  }
+}
+
+@layer base {
+  ::selection {
+    background-color: rgba(52, 179, 160, 0.35);
+    color: #0f172a;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(63, 110, 161, 0.35);
+    outline-offset: 3px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section-card {
+    padding: 1.5rem;
+  }
 }

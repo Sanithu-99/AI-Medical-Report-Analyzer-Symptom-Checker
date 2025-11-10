@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: medanalyzr
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - db_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/med_analyzr_ai
+      MONGO_DB_NAME: med_analyzr_ai
+    depends_on:
+      - mongo
+    networks:
+      - app_net
+      - db_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app_net
+
+volumes:
+  mongo_data:
+
+networks:
+  db_net:
+    driver: bridge
+  app_net:
+    driver: bridge

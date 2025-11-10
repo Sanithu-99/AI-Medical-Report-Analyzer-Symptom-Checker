@@ -4,6 +4,7 @@ motor
 python-dotenv
 pydantic-settings
 email-validator
+certifi
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
@@ -17,3 +18,7 @@ joblib
 spacy
 torch
 openai
+slowapi
+pyotp
+cryptography
+httpx

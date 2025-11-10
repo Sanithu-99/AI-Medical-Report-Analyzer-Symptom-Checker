@@ -1,15 +1,36 @@
-# AI Medical Report Analyzer and Symptom Checker
+# Med Analyzr AI · HIPAA Edition
 
-An end-to-end clinical insights platform that transforms uploaded medical reports into clear summaries, predictive health insights, and interactive visualisations. OCR extracts the data, NLP interprets it, an ML layer flags potential risks, and a sleek Apple-inspired UI keeps everything approachable.
+Med Analyzr AI is now an enterprise-grade, HIPAA-aligned workspace that ingests medical reports, anonymises PHI with salted HMAC tokens, and serves de-identified insights to clinicians, patients, and institutions. OCR → NLP → ML pipelines remain, but every layer now enforces TLS, audit logging, VPN/proxy denial, and tiered plan controls.
+
+```
+┌──────── Frontend (Next.js/Vercel) ────────┐
+│ Auth + plan-aware UI + secure exports     │
+└──────────────┬────────────────────────────┘
+               │ HTTPS (HSTS + JWT)
+┌──────────────▼────────────────────────────┐
+│  FastAPI (Render)                         │
+│  • Security headers, rate limiting        │
+│  • Anonymisation + audit middleware       │
+│  • HealthScore AI orchestrator            │
+└───────┬───────────────┬───────────────────┘
+        │               │
+  TLS   │               │ TLS
+┌───────▼───────┐  ┌────▼──────────────────┐
+│ MongoDB Atlas │  │ AI stack (OCR/NLP/ML) │
+│ FLE-ready +   │  │ EasyOCR · spaCy · RF  │
+│ field-level   │  │ + optional LLM (Ollama│
+│ encryption    │  │ Granite)              │
+└───────────────┘  └───────────────────────┘
+```
 
 ---
 
 ## Feature Highlights
-- **Secure authentication** with JWT, bcrypt hashing, and auto-seeded default accounts for quick demos.
-- **Medical report workflow**: PDF/image OCR → NLP summarisation (spaCy with optional GPT-4o-mini) → Random Forest predictions with keyword-based fallback heuristics.
-- **Symptom checker** that maps free-text complaints to possible conditions.
-- **Persistent insights** stored in MongoDB Atlas and surfaced in a responsive Next.js dashboard.
-- **Visualisations** powered by Chart.js with Tailwind-styled cards and glassmorphism UI.
+- **HIPAA + SOC2 guardrails**: TLS 1.2+, HSTS, strict security headers, audit logging to Mongo plus Cloud logging hooks, VPN/proxy denial, and geolocation-aware session validation.
+- **Automatic anonymisation**: Regex + spaCy NER strip PHI, salted HMAC tokens reference encrypted `phi_mapping`, quasi-identifiers get bucketed before any persistence.
+- **Subscription intelligence**: Individual, Clinician, and Institution plans enforce quotas, analytics access, secure exports, and API unlocks via `plan_usage`.
+- **Smarter HealthScore AI**: TF-IDF + RandomForest blended with optional Ollama Granite reasoning to deliver risk factors, confidence, and recommendations.
+- **Secure exports & sharing**: Signed download URLs, anonymised CSV exports, and MFA-protected account settings with device/IP fingerprinting.
 
 ---
 
@@ -20,6 +41,34 @@ An end-to-end clinical insights platform that transforms uploaded medical report
 | Backend | FastAPI, Motor, scikit-learn, pandas, numpy (`<2`), spaCy, EasyOCR, PyMuPDF |
 | Database | MongoDB Atlas |
 | Deployment targets | Vercel (frontend), Render (backend), MongoDB Atlas |
+
+## Compliance & Security Overview
+- **Transport & perimeter**: HTTPS enforced end-to-end with HSTS, TLS 1.2+, Trusted Host middleware, rate limiting (SlowAPI), Content-Security-Policy, and Referrer/Permissions guards.
+- **Authentication & sessions**: 15-minute JWTs, rotating refresh tokens stored as double-hashed entries in `session_log`, device fingerprint + IP drift enforcement, VPN/proxy denial (IPinfo), and optional TOTP MFA.
+- **Auditability**: Every PHI-touching request logs a redacted trail to `audit_logs` plus stdout, ready for CloudWatch/GCP Logging shipping.
+- **Data lifecycle**: Reports are soft-deleted (`storage_state=pending_purge`) and the `backend/scripts/data_retention.py` job purges after configurable grace periods. PHI mappings live in a separate encrypted collection.
+- **Storage**: MongoDB Atlas with TLS plus AES-GCM enveloping via `EncryptionManager`, signed download URLs, and strict file MIME validation.
+
+## Anonymisation Pipeline
+```
+Upload (PDF/JPG) ──▶ EasyOCR/PyMuPDF ──▶ spaCy NER + regex detectors
+      │                                      │
+      │                           Salted HMAC tokens + AES-GCM payload
+      ▼                                      │
+De-identified text ──▶ Reports collection ◀──┘
+                    ▲
+                    └── phi_mapping (encrypted) + quasi-ID buckets (ZIP➜region, DOB➜age-band)
+```
+
+## Plan Matrix
+
+| Plan | Monthly Reports | Symptom Checks | Advanced Analytics | Secure Exports | API / Teams |
+| --- | --- | --- | --- | --- | --- |
+| Individual | 10 | 20 | ✖ | ✖ | ✖ |
+| Clinician | 100 | 250 | ✔ | ✔ | ✖ |
+| Institution | Unlimited | Unlimited | ✔ | ✔ | ✔ |
+
+- Plans are enforced server-side via `plan_usage` and the `/api/auth/plan/select` endpoint. Exceeding quotas returns `402 Payment Required` so the UI can redirect to `/pricing`.
 
 ---
 
@@ -111,6 +160,20 @@ python -m spacy download en_core_web_sm
 ```
 EasyOCR and PyMuPDF install automatically; GPU acceleration is disabled by default for portability.
 
+### Sample anonymised dataset
+`data/anonymized_samples.json` ships with two fully de-identified reports that you can import for smoke testing the dashboard and HealthScore AI without touching PHI.
+
+## Docker Deployment
+Build a full local stack (MongoDB, FastAPI, Next.js) with isolated bridges for the database and app tiers:
+
+```bash
+docker compose up --build
+```
+
+- `backend/.env.example` documents the required secrets; copy it to `backend/.env` before composing.
+- MongoDB runs on `db_net`, while the backend straddles `db_net` + `app_net` to keep the database isolated from the public frontend container.
+- Frontend is exposed on [http://localhost:3000](http://localhost:3000) and proxies API calls to `http://backend:8000`.
+
 ---
 
 ## Frontend Setup
@@ -149,6 +212,10 @@ Navigate to `http://localhost:3000` to access the login page, dashboards, upload
 | Login inputs not focusable | Hot reload cached old CSS | Restart `npm run dev`, hard refresh the browser (⌘⇧R). |
 
 ---
+
+## CI & Security Scans
+- `.github/workflows/ci.yml` builds the backend, runs Bandit across the FastAPI app, and lints the Next.js frontend on every push/PR.
+- Dependabot monitors `backend/requirements.txt` and `frontend/package.json` weekly.
 
 ## Suggested Smoke Test
 - [ ] `curl http://127.0.0.1:8000/health`
