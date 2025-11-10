@@ -31,9 +31,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.11.1"
-      - name: Install
+
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
+
       - name: Lint
         working-directory: frontend
-        run: npm run lint --if-present
+        run: |
+          if npm run | grep -q "lint"; then
+            npm run lint
+          else
+            echo "No lint script found, skipping..."
+          fi
