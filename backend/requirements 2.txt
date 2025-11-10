@@ -11,7 +11,7 @@ python-multipart
 easyocr
 pymupdf
 pillow
-numpy<2
+numpy<3
 scikit-learn
 pandas
 joblib
